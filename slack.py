@@ -26,9 +26,11 @@ def theme_block(theme, by_id):
         f"<{by_id[i].url}|{esc(by_id[i].source)}: {esc(by_id[i].title[:30])}>" for i in theme["source_ids"][:MAX_SOURCES])
     return section(
         f"*◆ {esc(theme['topic'])}*\n"
-        f"• 課題: {esc(theme['problem'])}\n• うれしさ: {esc(theme['benefit'])}\n"
-        f"• 解決策: {esc(theme['solution'])}\n• キーワード: {kws}"
-        + (f"\n_出典: {refs}_" if refs else ""))
+        f"• *課題*\n{esc(theme['problem'])}\n\n"
+        f"• *うれしさ*\n{esc(theme['benefit'])}\n\n"
+        f"• *解決策*\n{esc(theme['solution'])}\n\n"
+        f"• *キーワード*\n{kws}"
+        + (f"\n\n_出典: {refs}_" if refs else ""))
 
 
 def build_blocks(date_str, items, themes_by_cat, n_articles, n_events):
