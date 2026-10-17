@@ -1,6 +1,6 @@
 import os
 
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 
 # 記事ごとにLLMへ渡す本文の最大文字数
 BODY_CHARS = 3000
