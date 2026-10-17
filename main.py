@@ -48,9 +48,10 @@ def main():
         print("新着がないため送信しません")
         return
 
-    article_sums = summarize.summarize_articles(articles)
-    event_sums, themes = summarize.summarize_events(events)
-    blocks = slack.build_blocks(f"{today:%Y/%m/%d}", articles, article_sums, events, event_sums, themes)
+    items = articles + events
+    sums = summarize.summarize_articles(items)
+    themes = summarize.synthesize(items, sums)
+    blocks = slack.build_blocks(f"{today:%Y/%m/%d}", items, themes, len(articles), len(events))
 
     if dry:
         import json

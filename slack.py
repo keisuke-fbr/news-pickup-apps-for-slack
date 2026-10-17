@@ -5,6 +5,7 @@ import urllib.request
 import config
 
 MAX_BLOCKS = 45
+MAX_SOURCES = 4
 
 
 def esc(s):
@@ -19,39 +20,27 @@ def section(text):
     return {"type": "section", "text": {"type": "mrkdwn", "text": text[:2900]}}
 
 
-def item_block(item, s):
-    kws = " ".join(f"`{esc(k)}`" for k in s["keywords"])
-    meta = f"  _{esc(item.source)}{' ・ ' + esc(item.meta) if item.meta else ''}_"
+def theme_block(theme, by_id):
+    kws = " ".join(f"`{esc(k)}`" for k in theme["keywords"])
+    refs = " / ".join(
+        f"<{by_id[i].url}|{esc(by_id[i].source)}: {esc(by_id[i].title[:30])}>" for i in theme["source_ids"][:MAX_SOURCES])
     return section(
-        f"*<{item.url}|{esc(item.title)}>*{meta}\n"
-        f"• 課題: {esc(s['problem'])}\n• うれしさ: {esc(s['benefit'])}\n"
-        f"• 解決策: {esc(s['solution'])}\n• キーワード: {kws}")
+        f"*◆ {esc(theme['topic'])}*\n"
+        f"• 課題: {esc(theme['problem'])}\n• うれしさ: {esc(theme['benefit'])}\n"
+        f"• 解決策: {esc(theme['solution'])}\n• キーワード: {kws}"
+        + (f"\n_出典: {refs}_" if refs else ""))
 
 
-def grouped_blocks(items, summaries):
-    blocks = []
+def build_blocks(date_str, items, themes_by_cat, n_articles, n_events):
+    by_id = {it.id: it for it in items}
+    blocks = [header(f"📰 技術トレンド整理 {date_str}"),
+              section(f"_記事・論文 {n_articles}件、講演 {n_events}件を読んで整理しました_")]
     for cat in config.CATEGORIES:
-        rows = [(it, summaries[it.id]) for it in items if it.id in summaries and summaries[it.id]["category"] == cat]
-        if rows:
+        themes = themes_by_cat.get(cat)
+        if themes:
+            blocks.append({"type": "divider"})
             blocks.append(section(f"*■ {esc(cat)}*"))
-            blocks += [item_block(it, s) for it, s in rows]
-    return blocks
-
-
-def build_blocks(date_str, articles, article_sums, events, event_sums, themes):
-    blocks = [header(f"📰 技術ニュースダイジェスト {date_str}")]
-    body = grouped_blocks(articles, article_sums)
-    if body:
-        blocks += [section("*📚 記事・論文*")] + body
-    ev_body = grouped_blocks(events, event_sums)
-    if themes or ev_body:
-        blocks += [{"type": "divider"}, section("*🎤 講演から見る、いま話題のテーマ*")]
-        by_id = {e.id: e for e in events}
-        for t in themes:
-            links = ", ".join(f"<{by_id[i].url}|{esc(by_id[i].title[:40])}>" for i in t.get("event_ids", [])[:3] if i in by_id)
-            blocks.append(section(f"*{esc(t.get('theme', ''))}*\n{esc(t.get('summary', ''))}" + (f"\n例: {links}" if links else "")))
-        if ev_body:
-            blocks += [section("*📅 注目イベント*")] + ev_body
+            blocks += [theme_block(t, by_id) for t in themes]
     return blocks
 
 
