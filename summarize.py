@@ -10,6 +10,7 @@ import config
 API = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 CHUNK = 24  # 無料枠は呼び出し回数の上限が厳しいので、1回で多めに読ませる
 MIN_CALL_INTERVAL = 6  # 秒。分あたりの回数制限に当たりにくくする
+MAX_ATTEMPTS = 2  # 1回の呼び出しにつき最大2リクエストまで(再試行は1回だけ)
 
 ITEM_SPEC = f"""各記事について次のJSONオブジェクトを作る。
 {{"id": "入力のid", "category": {json.dumps(config.CATEGORIES, ensure_ascii=False)} のいずれか1つ,
@@ -65,7 +66,7 @@ def _call(prompt, want=list):
     }
     url = API.format(model=config.GEMINI_MODEL)
     last = ""
-    for attempt in range(4):
+    for attempt in range(MAX_ATTEMPTS):
         time.sleep(max(0, MIN_CALL_INTERVAL - (time.time() - _last_call)))
         _last_call = time.time()
         req = urllib.request.Request(
@@ -89,7 +90,7 @@ def _call(prompt, want=list):
                 raise RuntimeError(f"Gemini API error {last}")
         except ValueError as e:
             last, wait = str(e), 5
-        print(f"  Gemini再試行 {attempt + 1}/4: {last[:200]} ({wait:.0f}秒待機)")
+        print(f"  Gemini再試行 {attempt + 1}/{MAX_ATTEMPTS}: {last[:200]} ({wait:.0f}秒待機)")
         time.sleep(wait)
     raise RuntimeError(f"Gemini APIから有効な応答を得られませんでした: {last[:300]}")
 
