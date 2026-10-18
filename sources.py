@@ -13,7 +13,7 @@ from email.utils import parsedate_to_datetime
 import config
 
 JST = timezone(timedelta(hours=9))
-UA = "Mozilla/5.0 (compatible; news-app/1.0)"
+UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
 
 
 @dataclass
@@ -122,7 +122,14 @@ def _article_text(url):
 
 
 def fetch_feed(feed, sent):
-    entries = [e for e in parse_feed(http_get(feed["url"])) if e["url"] and e["url"] not in sent]
+    try:
+        raw = http_get(feed["url"])
+    except Exception:
+        if not feed.get("alt"):
+            raise
+        print(f"  {feed['source']}: 取得失敗のため予備URLを試します")
+        raw = http_get(feed["alt"])
+    entries = [e for e in parse_feed(raw) if e["url"] and e["url"] not in sent]
     items = []
     for e in entries[: config.ARTICLES_PER_SOURCE]:
         body = e["body"]

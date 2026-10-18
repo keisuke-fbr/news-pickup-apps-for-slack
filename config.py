@@ -8,7 +8,8 @@ BODY_CHARS = 3000
 # RSSで取得するブログ。ARTICLES_PER_SOURCE件ずつ新しい順に見る
 ARTICLES_PER_SOURCE = 3
 FEEDS = [
-    {"group": "国内ブログ", "source": "メルカリ", "url": "https://engineering.mercari.com/blog/feed.xml"},
+    {"group": "国内ブログ", "source": "メルカリ", "url": "https://engineering.mercari.com/blog/feed.xml",
+     "alt": "https://engineering.mercari.com/en/blog/feed.xml"},
     {"group": "国内ブログ", "source": "LINEヤフー", "url": "https://techblog.lycorp.co.jp/ja/feed/index.xml"},
     {"group": "国内ブログ", "source": "サイバーエージェント", "url": "https://developers.cyberagent.co.jp/blog/feed/"},
     {"group": "海外企業", "source": "Google Developers", "url": "https://developers.googleblog.com/rss/"},
