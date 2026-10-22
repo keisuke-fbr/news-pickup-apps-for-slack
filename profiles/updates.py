@@ -1,6 +1,6 @@
 import os
 
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 BODY_CHARS = 2000
 ARTICLES_PER_SOURCE = 5
 REQUEST_INTERVAL_SEC = 1.0
