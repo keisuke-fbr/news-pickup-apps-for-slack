@@ -4,7 +4,7 @@ from pathlib import Path
 
 import config
 
-PATH = Path(__file__).parent / "sent.json"
+PATH = Path(__file__).parent / getattr(config, "STATE_FILE", "sent.json")
 
 
 def load():
