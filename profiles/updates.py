@@ -23,6 +23,12 @@ FEEDS = [
     {"group": "製品アップデート", "source": "Databricks",
      "url": "https://www.databricks.com/feed",
      "alt": "https://www.databricks.com/company/newsroom"},
+    {"group": "製品アップデート", "source": "AWS",
+     "url": "https://aws.amazon.com/about-aws/whats-new/recent/feed/"},
+    # RSSがないため、一覧ページのリンクから詳細ページをたどる
+    {"group": "製品アップデート", "source": "Hugging Face",
+     "url": "https://huggingface.co/changelog",
+     "link_pattern": r'href="(/changelog/[^"#?]+)"'},
 ]
 
 ITEM_SPEC = """各記事について次のJSONオブジェクトを作る。

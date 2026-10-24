@@ -121,7 +121,30 @@ def _article_text(url):
     return html_to_text(m.group(0) if m else page)
 
 
+def fetch_html_list(feed, sent):
+    """RSSがないサイト用。一覧ページのリンクを新しい順にたどり、詳細ページの本文を取る"""
+    page = http_get_text(feed["url"])
+    links = list(dict.fromkeys(re.findall(feed["link_pattern"], page)))
+    items = []
+    for link in links:
+        url = urllib.parse.urljoin(feed["url"], link)
+        if url in sent:
+            continue
+        time.sleep(config.REQUEST_INTERVAL_SEC)
+        try:
+            detail = http_get_text(url)
+            items.append(Item(feed["group"], feed["source"], page_title(detail), url,
+                              _article_text(url)[: config.BODY_CHARS]))
+        except Exception as ex:
+            print(f"  詳細取得に失敗 {url}: {ex}")
+        if len(items) >= config.ARTICLES_PER_SOURCE:
+            break
+    return items
+
+
 def fetch_feed(feed, sent):
+    if feed.get("link_pattern"):
+        return fetch_html_list(feed, sent)
     try:
         raw = http_get(feed["url"])
     except Exception:
