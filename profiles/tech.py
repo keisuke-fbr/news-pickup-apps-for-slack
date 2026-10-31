@@ -2,7 +2,7 @@ import json
 import os
 
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
-BODY_CHARS = 3000
+BODY_CHARS = 2000
 ARTICLES_PER_SOURCE = 3
 REQUEST_INTERVAL_SEC = 1.0
 STATE_KEEP_DAYS = 90

@@ -9,7 +9,7 @@ import urllib.request
 import config
 
 API = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-CHUNK = 24  # 無料枠は呼び出し回数の上限が厳しいので、1回で多めに読ませる
+CHUNK = 16  # 大きすぎるとタイムアウトで巻き添えになる件数が増える
 MIN_CALL_INTERVAL = 6  # 秒。分あたりの回数制限に当たりにくくする
 MAX_ATTEMPTS = 2  # 1回の呼び出しにつき最大2リクエストまで(再試行は1回だけ)
 
@@ -64,7 +64,7 @@ def _call(prompt, want=list):
             url, data=json.dumps(body).encode(),
             headers={"Content-Type": "application/json", "x-goog-api-key": key})
         try:
-            with urllib.request.urlopen(req, timeout=300) as r:
+            with urllib.request.urlopen(req, timeout=180) as r:
                 return _parse(json.load(r), want)
         except urllib.error.HTTPError as e:
             err = e.read().decode(errors="replace")
@@ -128,9 +128,9 @@ def summarize_articles(items):
 
 
 def summarize_updates(items):
-    """{item.id: {"product": ..., "update": ...}} skipされた記事は除外"""
+    """({item.id: {"product": ..., "update": ...}}, 処理できた記事のid) skipされた記事は前者から除外"""
     valid_ids = {it.id for it in items}
-    result = {}
+    result, done = {}, set()
     for i in range(0, len(items), CHUNK):
         chunk = items[i:i + CHUNK]
         prompt = (f"あなたは製品情報を整理するアシスタントです。以下の記事を分析してください。\n{GUARD}\n\n"
@@ -143,11 +143,12 @@ def summarize_updates(items):
                 r["product"] = r.get("product") or "記載なし"
                 r["update"] = r.get("update") or "記載なし"
                 result[r["id"]] = r
+            done.update(it.id for it in chunk)
         except QuotaExhausted:
             raise
         except RuntimeError as e:
             print(f"  要約をスキップ({len(chunk)}件): {e}")
-    return result
+    return result, done
 
 
 def synthesize(items, sums):
@@ -188,4 +189,16 @@ def synthesize(items, sums):
                 t[f] = t.get(f) or "記載なし"
             t["source_ids"] = [i for i in t.get("source_ids") or [] if i in valid[cat]]
         result[cat] = themes
+    return result
+
+
+def fallback_themes(items, sums):
+    """整理(synthesize)が失敗したとき、記事ごとの要約をそのまま分野別に並べる"""
+    result = {}
+    for it in items:
+        s = sums.get(it.id)
+        if s:
+            result.setdefault(s["category"], []).append({
+                "topic": it.title, "problem": s["problem"], "benefit": s["benefit"],
+                "solution": s["solution"], "keywords": s["keywords"], "source_ids": [it.id]})
     return result

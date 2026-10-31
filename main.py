@@ -53,10 +53,16 @@ def main():
 
         items = articles + events
         sums = summarize.summarize_articles(items)
-        themes = summarize.synthesize(items, sums)
+        try:
+            themes = summarize.synthesize(items, sums)
+        except summarize.QuotaExhausted:
+            raise
+        except RuntimeError as e:  # 整理だけ失敗しても、読み取り済みの要約は捨てずに送る
+            print(f"  分野ごとの整理に失敗したため、記事ごとの要約をそのまま送ります: {e}")
+            themes = summarize.fallback_themes(items, sums)
         blocks = slack.build_blocks(f"{today:%Y/%m/%d}", items, themes, len(articles), len(events))
         fallback = f"技術ニュースダイジェスト {today:%Y/%m/%d}"
-        new_urls = [it.url for it in items]
+        new_urls = [it.url for it in items if it.id in sums]  # 要約できたものだけ送信済みにする
 
     elif config.MODE == "updates":
         articles = []
@@ -74,13 +80,15 @@ def main():
             print("新着がないため送信しません")
             return
 
-        sums = summarize.summarize_updates(articles)
+        sums, done = summarize.summarize_updates(articles)
         if not sums:
             print("製品アップデートに該当する記事がないため送信しません")
+            if not dry:
+                state.save(sent, [it.url for it in articles if it.id in done], today)
             return
         blocks = slack.build_update_blocks(f"{today:%Y/%m/%d}", articles, sums)
         fallback = f"製品アップデート {today:%Y/%m/%d}"
-        new_urls = [it.url for it in articles]
+        new_urls = [it.url for it in articles if it.id in done]
 
     else:
         raise ValueError(f"未知のMODE: {config.MODE}")
