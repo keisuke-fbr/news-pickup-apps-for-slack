@@ -1,3 +1,4 @@
+import http.client
 import json
 import os
 import re
@@ -75,11 +76,13 @@ def _call(prompt, want=list):
                 m = re.search(r'"retryDelay":\s*"(\d+(?:\.\d+)?)s"', err)
                 wait = min(float(m.group(1)) + 2, 90) if m else 30
             elif e.code in (500, 503):
-                wait = 20 * (attempt + 1)
+                wait = 30
             else:
                 raise RuntimeError(f"Gemini API error {last}")
         except ValueError as e:
             last, wait = str(e), 5
+        except (OSError, http.client.HTTPException) as e:  # 接続切断・タイムアウトなど
+            last, wait = f"通信エラー {type(e).__name__}: {e}", 20
         print(f"  Gemini再試行 {attempt + 1}/{MAX_ATTEMPTS}: {last[:200]} ({wait:.0f}秒待機)")
         time.sleep(wait)
     raise RuntimeError(f"Gemini APIから有効な応答を得られませんでした: {last[:300]}")
