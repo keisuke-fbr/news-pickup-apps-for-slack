@@ -1,7 +1,7 @@
 import json
 import os
 
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 BODY_CHARS = 2000
 ARTICLES_PER_SOURCE = 3
 REQUEST_INTERVAL_SEC = 1.0
